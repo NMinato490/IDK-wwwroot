@@ -12,12 +12,7 @@ next-env.d.ts
 # turbo
 .turbo/
 
-# env (keep .example, ignore real)
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+# env (committed on purpose — local dev URLs only, no secrets)
 
 # misc
 .DS_Store
