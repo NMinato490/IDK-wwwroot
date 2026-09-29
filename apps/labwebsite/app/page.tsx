@@ -3,6 +3,7 @@
 import { motion } from "motion/react";
 import { ArrowRight, Lock } from "lucide-react";
 import { useTheme, palette, ThemeToggle } from "@repo/ui";
+import { CommandMenu } from "../components/command-menu";
 
 const portalUrl = process.env.NEXT_PUBLIC_PORTAL_URL ?? "http://localhost:4000";
 
@@ -200,6 +201,8 @@ export default function Page() {
           <span style={{ color: c.faintest }}> :8088</span>
         </span>
       </motion.div>
+
+      <CommandMenu portalUrl={portalUrl} />
     </div>
   );
 }

@@ -2,31 +2,53 @@
 
 import * as React from "react";
 import { motion } from "motion/react";
-import { Home, LayoutGrid, ArrowLeft, Link2, Globe, Copy, Check, ExternalLink } from "lucide-react";
+import { useSearchParams } from "next/navigation";
+import { Home, LayoutGrid, ArrowLeft, Link2, Globe, Copy, Check, ExternalLink, ShieldCheck } from "lucide-react";
 import { useTheme, palette, ThemeToggle } from "@repo/ui";
 
 const homeUrl = process.env.NEXT_PUBLIC_HOME_URL ?? "http://localhost:3000";
 const portalUrl = process.env.NEXT_PUBLIC_PORTAL_URL ?? "http://localhost:4000";
 const displayUrl = process.env.NEXT_PUBLIC_ACCESS_URL ?? "http://localhost:3001";
-const displayHost = (() => {
+
+function hostOf(url: string) {
   try {
-    return new URL(displayUrl).host;
+    return new URL(url).host;
   } catch {
-    return displayUrl;
+    return url;
   }
-})();
+}
+
+function sanitizeVia(raw: string | null): string | null {
+  if (!raw) return null;
+  const v = raw.trim();
+  if (/^https?:\/\/[^\s/$.?#].[^\s]*$/i.test(v)) return v;
+  return null;
+}
 
 const mono: React.CSSProperties = {
   fontFamily: "'JetBrains Mono', 'SFMono-Regular', Menlo, Consolas, monospace",
 };
 
 export default function Page() {
+  return (
+    <React.Suspense fallback={null}>
+      <Site1Content />
+    </React.Suspense>
+  );
+}
+
+function Site1Content() {
   const { theme } = useTheme();
   const c = palette[theme];
+  const searchParams = useSearchParams();
+  // Admin route: portal's Admin entry links here with ?via=<admin gateway URL>
+  const viaUrl = sanitizeVia(searchParams.get("via"));
+  const activeUrl = viaUrl ?? displayUrl;
+  const activeHost = hostOf(activeUrl);
   const [copied, setCopied] = React.useState(false);
   const copy = async () => {
     try {
-      await navigator.clipboard.writeText(displayUrl);
+      await navigator.clipboard.writeText(activeUrl);
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
     } catch {
@@ -93,8 +115,46 @@ export default function Page() {
           </p>
           <h1 style={{ fontSize: 52, fontWeight: 800, letterSpacing: -1, margin: "8px 0" }}>Site 1</h1>
           <p style={{ color: c.muted, fontSize: 14, lineHeight: 1.6, margin: "0 0 20px" }}>
-            Sandbox workspace instance at {displayHost} with active ingress routing.
+            Sandbox workspace instance at {activeHost} with active ingress routing.
           </p>
+
+          {viaUrl ? (
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.45, ease: "easeOut" }}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                background: "rgba(109,92,255,0.08)",
+                border: "1px solid rgba(109,92,255,0.25)",
+                borderRadius: 10,
+                padding: "10px 14px",
+                marginBottom: 12,
+                fontSize: 12,
+                color: c.text,
+                ...mono,
+              }}
+            >
+              <ShieldCheck size={15} style={{ color: "#6d5cff", flexShrink: 0 }} />
+              <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                Accessed via {viaUrl}
+              </span>
+              <span
+                style={{
+                  fontSize: 10,
+                  background: "rgba(109,92,255,0.15)",
+                  color: "#6d5cff",
+                  borderRadius: 999,
+                  padding: "3px 9px",
+                  flexShrink: 0,
+                }}
+              >
+                ADMIN ROUTE
+              </span>
+            </motion.div>
+          ) : null}
 
           <motion.div
             initial={{ opacity: 0, y: 16 }}
@@ -128,7 +188,7 @@ export default function Page() {
               }}
             >
               <Globe size={15} style={{ flexShrink: 0 }} />
-              <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{displayUrl}</span>
+              <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{activeUrl}</span>
               <button
                 type="button"
                 onClick={copy}
@@ -146,7 +206,7 @@ export default function Page() {
               >
                 {copied ? <Check size={14} /> : <Copy size={14} />} {copied ? "Copied" : "Copy"}
               </button>
-              <a href={displayUrl} style={{ color: c.text2, display: "inline-flex" }} aria-label="Open URL">
+              <a href={activeUrl} style={{ color: c.text2, display: "inline-flex" }} aria-label="Open URL">
                 <ExternalLink size={14} />
               </a>
             </div>
